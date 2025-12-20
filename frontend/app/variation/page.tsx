@@ -156,11 +156,11 @@ export default function VariationPage() {
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <h3 className="text-sm font-medium text-gray-700 mb-2">Original</h3>
-                    <ImageDisplay src={uploadedUrl} alt="Original image" />
+                    <ImageDisplay src={uploadedUrl} alt="Original image" showDownload={true} />
                   </div>
                   <div>
                     <h3 className="text-sm font-medium text-gray-700 mb-2">Variation</h3>
-                    <ImageDisplay src={generatedImage} alt="Generated variation" />
+                    <ImageDisplay src={generatedImage} alt="Generated variation" showDownload={true} />
                   </div>
                 </div>
               </div>

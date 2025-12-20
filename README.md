@@ -101,9 +101,30 @@ npm run dev
 
 Frontend will be available at http://localhost:3000
 
+## 🚀 Quick Start (Using Scripts)
+
+**Easy way to start both servers at once:**
+
+### Windows (PowerShell)
+```powershell
+.\scripts\start-app-split.ps1
+```
+
+### Linux/Mac (Bash)
+```bash
+chmod +x scripts/*.sh    # Make scripts executable (first time only)
+./scripts/start-app-split.sh
+```
+
+**This opens two terminal windows:**
+- Backend server on http://127.0.0.1:8000
+- Frontend server on http://localhost:3000
+
+See [scripts/README.md](scripts/README.md) for more options (single terminal, individual servers, etc.)
+
 ## 🎯 Usage
 
-1. Start both backend and frontend servers
+1. Start both backend and frontend servers (see Quick Start above)
 2. Open http://localhost:3000 in your browser
 3. Select a feature from the home page
 4. Upload images or enter prompts
@@ -282,7 +303,8 @@ curl -X GET "http://127.0.0.1:8000/api/jobs/abc123"
 3. Attach policy: `AmazonS3FullAccess` (or custom policy)
 4. Create Access Key → Download credentials
 5. Create an S3 bucket in your preferred region
-6. Add credentials to backend `.env`:
+6. **Configure CORS** (see [S3_CORS_SETUP.md](S3_CORS_SETUP.md) for details)
+7. Add credentials to backend `.env`:
    ```
    AWS_ACCESS_KEY_ID=AKIAXXXXXXXXXXXXXXXX
    AWS_SECRET_ACCESS_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -290,7 +312,10 @@ curl -X GET "http://127.0.0.1:8000/api/jobs/abc123"
    AWS_BUCKET_NAME=your-bucket-name
    ```
 
-**Note:** For production, use IAM roles and restrict S3 bucket policies appropriately.
+**Important:** 
+- For image downloads to work properly, configure S3 CORS (see [S3_CORS_SETUP.md](S3_CORS_SETUP.md))
+- For production, use IAM roles and restrict S3 bucket policies appropriately
+- Download feature works without CORS using fallback methods, but CORS improves UX
 
 ## 🎯 Usage
 

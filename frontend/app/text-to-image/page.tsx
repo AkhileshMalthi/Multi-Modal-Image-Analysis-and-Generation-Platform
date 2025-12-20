@@ -144,7 +144,7 @@ export default function TextToImagePage() {
             <div className="space-y-4 mt-6">
               <div className="border-t pt-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">Generated Image</h2>
-                <ImageDisplay src={generatedImage} alt="Generated image" />
+                <ImageDisplay src={generatedImage} alt="Generated image" showDownload={true} />
               </div>
 
               <button
