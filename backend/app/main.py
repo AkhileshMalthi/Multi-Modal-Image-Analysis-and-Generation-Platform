@@ -196,6 +196,7 @@ def process_image_generation(job_id: str, task_type: str, prompt: str,
     from .database import SessionLocal
     
     db = SessionLocal()
+    job = None
     try:
         # Update status to processing
         job = db.query(GenerationRequest).filter(GenerationRequest.job_id == job_id).first()

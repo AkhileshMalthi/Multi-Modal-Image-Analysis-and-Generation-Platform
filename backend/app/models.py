@@ -1,28 +1,31 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, Enum
+from sqlalchemy import String, DateTime, Text, Enum
+from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 from .database import Base
+from datetime import datetime
+from typing import Optional
 import enum
 
 
 class ImageMeta(Base):
     __tablename__ = "images"
 
-    id = Column(Integer, primary_key=True, index=True)
-    filename = Column(String, index=True)
-    s3_url = Column(String)
-    uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    filename: Mapped[str] = mapped_column(String, index=True)
+    s3_url: Mapped[str] = mapped_column(String)
+    uploaded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class AnalysisResult(Base):
     __tablename__ = "analysis_results"
 
-    id = Column(Integer, primary_key=True, index=True)
-    image_id = Column(Integer, index=True)  # Foreign key to ImageMeta
-    image_url = Column(String)
-    analysis_type = Column(String, index=True)  # 'caption', 'vqa', 'object-detection'
-    prompt = Column(Text, nullable=True)  # For VQA questions
-    result = Column(Text)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    image_id: Mapped[int] = mapped_column(index=True)  # Foreign key to ImageMeta
+    image_url: Mapped[str] = mapped_column(String)
+    analysis_type: Mapped[str] = mapped_column(String, index=True)  # 'caption', 'vqa', 'object-detection'
+    prompt: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # For VQA questions
+    result: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class JobStatus(str, enum.Enum):
@@ -35,14 +38,14 @@ class JobStatus(str, enum.Enum):
 class GenerationRequest(Base):
     __tablename__ = "generation_requests"
 
-    id = Column(Integer, primary_key=True, index=True)
-    job_id = Column(String, unique=True, index=True)  # UUID for tracking
-    task_type = Column(String)  # 'text-to-image', 'image-variation'
-    prompt = Column(Text)
-    source_image_url = Column(String, nullable=True)  # For variations
-    result_image_url = Column(String, nullable=True)  # Generated image S3 URL
-    status = Column(Enum(JobStatus), default=JobStatus.PENDING)
-    error_message = Column(Text, nullable=True)
-    provider = Column(String, default="huggingface")
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    completed_at = Column(DateTime(timezone=True), nullable=True)
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    job_id: Mapped[str] = mapped_column(String, unique=True, index=True)  # UUID for tracking
+    task_type: Mapped[str] = mapped_column(String)  # 'text-to-image', 'image-variation'
+    prompt: Mapped[str] = mapped_column(Text)
+    source_image_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)  # For variations
+    result_image_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)  # Generated image S3 URL
+    status: Mapped[JobStatus] = mapped_column(Enum(JobStatus), default=JobStatus.PENDING)
+    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    provider: Mapped[str] = mapped_column(String, default="huggingface")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
