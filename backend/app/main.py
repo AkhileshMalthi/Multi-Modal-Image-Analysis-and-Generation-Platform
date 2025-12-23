@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from typing import Optional
 import uuid
 from datetime import datetime
+import hashlib
 
 from .database import engine, Base, get_db
 from .models import ImageMeta, AnalysisResult, GenerationRequest, JobStatus
@@ -69,27 +70,64 @@ def read_root():
 # === IMAGE UPLOAD ===
 @app.post("/upload")
 def upload_image(file: UploadFile = File(...), db: Session = Depends(get_db)):
-    """Upload an image to S3 and store metadata in database"""
+    """
+    Upload an image to S3 and store metadata in database.
+    Implements deduplication: if the same image (by content hash) already exists, 
+    returns the existing URL instead of uploading again.
+    """
     if not file.filename:
         raise HTTPException(status_code=400, detail="No file uploaded")
     
-    file_extension = file.filename.split(".")[-1]
-    unique_filename = f"uploads/{uuid.uuid4()}.{file_extension}"
+    # Read file content once
+    file_content = file.file.read()
+    file_size = len(file_content)
     
-    # Upload to S3
-    image_url = upload_file_to_s3(file.file, unique_filename)
+    # Calculate SHA256 hash of file content for deduplication
+    content_hash = hashlib.sha256(file_content).hexdigest()
+    
+    # Check if this exact file already exists in database
+    existing_image = db.query(ImageMeta).filter(ImageMeta.content_hash == content_hash).first()
+    
+    if existing_image:
+        print(f"✓ Duplicate detected! Returning existing image: {existing_image.filename}")
+        return {
+            "message": "Image already exists (duplicate detected)",
+            "duplicate": True,
+            "data": {
+                "id": existing_image.id,
+                "url": existing_image.s3_url,
+                "filename": existing_image.filename,
+                "original_upload_date": existing_image.uploaded_at
+            }
+        }
+    
+    # File is new, proceed with upload
+    file_extension = file.filename.split(".")[-1]
+    unique_filename = f"uploads/{content_hash[:16]}.{file_extension}"  # Use hash prefix for filename
+    
+    # Reset file pointer and upload to S3
+    from io import BytesIO
+    image_url = upload_file_to_s3(BytesIO(file_content), unique_filename)
     
     if not image_url:
         raise HTTPException(status_code=500, detail="Failed to upload image to storage")
 
-    # Save Metadata to DB
-    new_image = ImageMeta(filename=unique_filename, s3_url=image_url)
+    # Save Metadata to DB with hash
+    new_image = ImageMeta(
+        filename=unique_filename, 
+        s3_url=image_url,
+        content_hash=content_hash,
+        file_size=file_size
+    )
     db.add(new_image)
     db.commit()
     db.refresh(new_image)
+    
+    print(f"✓ New image uploaded: {unique_filename} (hash: {content_hash[:16]}...)")
 
     return {
         "message": "Upload successful",
+        "duplicate": False,
         "data": {
             "id": new_image.id,
             "url": new_image.s3_url,

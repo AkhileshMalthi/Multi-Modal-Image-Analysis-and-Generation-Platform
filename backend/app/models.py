@@ -13,6 +13,8 @@ class ImageMeta(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     filename: Mapped[str] = mapped_column(String, index=True)
     s3_url: Mapped[str] = mapped_column(String)
+    content_hash: Mapped[Optional[str]] = mapped_column(String(64), unique=True, index=True, nullable=True)  # SHA256 hash for deduplication
+    file_size: Mapped[Optional[int]] = mapped_column(nullable=True)  # File size in bytes
     uploaded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
